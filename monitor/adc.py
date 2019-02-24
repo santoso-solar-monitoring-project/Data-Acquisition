@@ -11,25 +11,43 @@ class ADC_Reader(object):
 	The default address for the ADS1015 is 0x48, but you can change which ADS you are
 	connected to by specifying address in __init__
 
+	Example: adc = ADC_Reader(address=0x49)
+		 voltage = adc.read_voltage()
+
 	read_voltage returns the voltage formatted as a floating integer
 	read_raw returns the raw data value the ADS reads
+
+	sample assumes you have the open circuit voltage plugged into A0, and then the 
+	positive side of the shunt resistor plugged into A1 and the negative side in A2
+	It will return the voltage from the open circuit and the current going over the
+	shunt resistor
 	"""
 
 	def __init__(self, address=0x48):
 		self.address = address
 		self.i2c_bus = busio.I2C(board.SCL, board.SDA)
 		self.adc = ADC.ADS1015(i2c=self.i2c_bus, address=self.address)
-		self.channel = AnalogIn(self.adc, ADC.P0)
+		self.channels = [AnalogIn(self.adc, ADC.P0), AnalogIn(self.adc, ADC.P1), AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
 
-	def read_voltage(self):
-		return self.channel.voltage
+	def read_voltage(self, chan):
+		return self.channels[chan].voltage
 
-	def read_raw(self):
-		return self.channel.value
+	def read_raw(self, chan):
+		return self.channels[chan].value
+
+	def sample(self):
+		resistance = 0.01
+		voltage = self.channels[0].voltage
+		current = (self.channels[1].voltage - self.channels[2].voltage)/resistance
+		return (voltage, current)
+
 
 if __name__ == "__main__":
 	adc = ADC_Reader()
-	print("Voltage\t\tRaw Value")
+	print("\t\tVoltage\t\tRaw Value")
 	while True:
-		print("{:.5f}\t\t{}".format(adc.read_voltage(), adc.read_raw()))
+		for i in range(4):
+			print("Channel {}:\t{:.5f}\t\t{}".format(i, adc.read_voltage(i), adc.read_raw(i)))
+		#print(adc.sample())
+		print("")
 		time.sleep(1)
