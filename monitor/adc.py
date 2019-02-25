@@ -25,10 +25,11 @@ class ADC_Reader(object):
 	the shunt resistor
 	"""
 
-	def __init__(self, address=0x48):
+	def __init__(self, address=0x48, rate=3300):
 		self.address = address
+		self.rate = rate
 		self.i2c_bus = busio.I2C(board.SCL, board.SDA)
-		self.adc = ADC.ADS1015(i2c=self.i2c_bus, address=self.address)
+		self.adc = ADC.ADS1015(i2c=self.i2c_bus, address=self.address, data_rate=self.rate)
 		self.channels = [AnalogIn(self.adc, ADC.P0), AnalogIn(self.adc, ADC.P1),
 		 				AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
 		self.differentials = [AnalogIn(self.adc, ADC.P0, ADC.P1), AnalogIn(self.adc, ADC.P2, ADC.P3)]
@@ -39,10 +40,18 @@ class ADC_Reader(object):
 	def read_raw(self, chan):
 		return self.channels[chan].value
 
-	def sample(self):
+	def sample(self, number_of_samples):
 		resistance = 0.01
+		frequency = self.rate/number_of_samples
+		sleep_time = 1/frequency
+		avg_voltage = 0
+		avg_current = 0
+		for i in range(number_of_samples):
+			avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
+			avg_current = (avg_current*i + self.differentials[0].voltage)/(i+1)
+			time.sleep(sleep_time)
 		voltage = self.channels[2].voltage
-		current = self.differentials[0]/resistance
+		current = self.differentials[0].voltage/resistance
 		return (voltage, current)
 
 
@@ -52,6 +61,6 @@ if __name__ == "__main__":
 	while True:
 		for i in range(4):
 			print("Channel {}:\t{:.5f}\t\t{}".format(i, adc.read_voltage(i), adc.read_raw(i)))
-		#print(adc.sample())
+		print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}".format(adc.sample(10)))
 		print("")
 		time.sleep(1)
