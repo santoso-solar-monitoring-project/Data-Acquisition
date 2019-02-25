@@ -6,10 +6,11 @@ from adafruit_ads1x15.analog_in import AnalogIn
 
 class ADC_Reader(object):
 	"""
-	The ADC Reader class allows for the user to easily set up a connection to the ADS1015
+	The ADC Reader class allows for the user to easily set up a connection to
+	the ADS1015
 
-	The default address for the ADS1015 is 0x48, but you can change which ADS you are
-	connected to by specifying address in __init__
+	The default address for the ADS1015 is 0x48, but you can change which ADS
+	you are connected to by specifying address in __init__
 
 	Example: adc = ADC_Reader(address=0x49)
 		 voltage = adc.read_voltage()
@@ -17,17 +18,20 @@ class ADC_Reader(object):
 	read_voltage returns the voltage formatted as a floating integer
 	read_raw returns the raw data value the ADS reads
 
-	sample assumes you have the open circuit voltage plugged into A0, and then the 
-	positive side of the shunt resistor plugged into A1 and the negative side in A2
-	It will return the voltage from the open circuit and the current going over the
-	shunt resistor
+	sample assumes you have the positive side of the shunt resistor plugged into
+	A0 and the negative side in A1, and the open circuit voltage plugged into
+	A2
+	It will return the voltage from the open circuit and the current going over
+	the shunt resistor
 	"""
 
 	def __init__(self, address=0x48):
 		self.address = address
 		self.i2c_bus = busio.I2C(board.SCL, board.SDA)
 		self.adc = ADC.ADS1015(i2c=self.i2c_bus, address=self.address)
-		self.channels = [AnalogIn(self.adc, ADC.P0), AnalogIn(self.adc, ADC.P1), AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
+		self.channels = [AnalogIn(self.adc, ADC.P0), AnalogIn(self.adc, ADC.P1),
+		 				AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
+		self.differentials = [AnalogIn(self.adc, ADC.P0, ADC.P1), AnalogIn(self.adc, ADC.P2, ADC.P3)]
 
 	def read_voltage(self, chan):
 		return self.channels[chan].voltage
@@ -37,8 +41,8 @@ class ADC_Reader(object):
 
 	def sample(self):
 		resistance = 0.01
-		voltage = self.channels[0].voltage
-		current = (self.channels[1].voltage - self.channels[2].voltage)/resistance
+		voltage = self.channels[2].voltage
+		current = self.differentials[0]/resistance
 		return (voltage, current)
 
 
