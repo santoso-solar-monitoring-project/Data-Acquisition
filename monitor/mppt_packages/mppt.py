@@ -1,5 +1,6 @@
 from .adc import ADC_Reader
 from enum import Enum
+from multiprocessing import Value
 
 class Modes(Enum):
     DEBUG = -1
@@ -11,7 +12,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
 
     MAX_POWER = 400
 
-    def __init__(self, mode=Modes.DEBUG):
+    def __init__(self, mode=Modes.DEBUG, adc):
         self._v = 0
         self._i = 0
         self._p = 0
@@ -21,7 +22,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         self._mode = mode
         self._debug = 0
         self._count = 0
-        self._adc = ADC_Reader()
+        self._adc = adc
 
     def switch(self, mode):
         self._mode = mode
@@ -118,6 +119,12 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         self.update_old_values()
         return led, ret
 
+    def run(self):
+        #Implement this to work with controller.py's run_monitor()
+        #It needs to return the voltage, current, or a shutdown command
+        #Like "return (voltage,current,"")" versus "return (0,0,"shutdown")"
+        pass
+
 if __name__ == "__main__": #This is only called if you start it with "python3 mppt.py", not if you're calling it from another file
-    mppt = MPPT()
+    mppt = MPPT(adc=adc.ADC_Reader())
     #Do something here
