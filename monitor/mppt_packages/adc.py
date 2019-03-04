@@ -46,9 +46,9 @@ class ADC_Reader(object):
         return self.channels[chan].value
 
     def sample(self, frequency=0, number_of_samples=0):
+        resistance = 0.01
         #Single shot sampling
         if not self.continuous:
-            resistance = 0.01
             sleep_time = 1/frequency
             avg_voltage = 0
             avg_current = 0

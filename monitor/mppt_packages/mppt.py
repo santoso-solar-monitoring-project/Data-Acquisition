@@ -12,7 +12,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
 
     MAX_POWER = 400
 
-    def __init__(self, mode=Modes.DEBUG, adc):
+    def __init__(self, adc, mode=Modes.DEBUG):
         self._v = 0
         self._i = 0
         self._p = 0
