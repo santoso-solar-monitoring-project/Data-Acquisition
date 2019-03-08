@@ -15,12 +15,3 @@ def push_data(data):
         return True
     else:
         return False
-
-'''
-appId: '651114',
-  key: '9dfb7224d7fd60cc9c5f',
-  secret: '958b9a4ad341c43ade27',
-  cluster: 'us2',
-  encrypted: true,
-});
-'''

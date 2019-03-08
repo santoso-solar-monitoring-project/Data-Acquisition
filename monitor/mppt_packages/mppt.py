@@ -19,13 +19,19 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         self._v_old = 0
         self._i_old = 0
         self._p_old = 0
-        self._mode = mode
+        if type(mode) == type(0): #It's an int, we need a Mode
+            self._mode = Modes(mode)
+        else:
+            self._mode = mode
         self._debug = 0
         self._count = 0
         self._adc = adc
 
     def switch(self, mode):
-        self._mode = mode
+        if type(mode) == type(0): #It's an int, we need a Mode
+            self._mode = Modes(mode)
+        else:
+            self._mode = mode
         if self._mode == Modes.DEBUG:
             print("MPPT now in Debug Mode")
         # P&O

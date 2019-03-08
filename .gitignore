@@ -1,2 +1,6 @@
 #Ignore all compiled python
 *.pyc
+
+#Ignore the py cache
+__pycache__/
+mppt_packages/__pycache__/
