@@ -2,5 +2,5 @@
 *.pyc
 
 #Ignore the py cache
-__pycache__/
-mppt_packages/__pycache__/
+monitor/__pycache__/
+monitor/mppt_packages/__pycache__/
