@@ -1,5 +1,5 @@
 import time
-import board
+from board import SCL, SDA
 import busio
 import adafruit_ads1x15.ads1015 as ADC
 from adafruit_ads1x15.analog_in import AnalogIn
@@ -28,7 +28,7 @@ class ADC_Reader(object):
 
     def __init__(self, address=0x48, continuous=False, rate=3300):
         self.address = address
-        self.i2c_bus = busio.I2C(board.SCL, board.SDA, frequency=400000) #Up to 3.4MHz, should probably stay <1MHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
+        self.i2c_bus = busio.I2C(SCL, SDA, frequency=400000) #Up to 3.4MHz, should probably stay <1MHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
         self.continuous = continuous
         self.rate = rate
         if continuous:
