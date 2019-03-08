@@ -16,6 +16,11 @@ In order to install the necessary Adafruit libraries, go into the base directory
 ```
 pip3 install -r requirements.txt
 ```
+You may have to resolve some dependencies for Pusher (as it uses OpenSSL), depending on your platform. If so, refer to these commands for usage on a Pi:
+```
+sudo apt-get install build-essential libssl-dev libffi-dev python-dev python-cffi
+```
+Then re-run the 'pip3 install pusher' command.
 
 ### Starting the Project
 In this project we used three ADS1015s, addressed 0x48-0x4A, and two PCA9685s, addressed 0x40 and 0x41.
