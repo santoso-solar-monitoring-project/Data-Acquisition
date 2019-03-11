@@ -3,9 +3,10 @@
 #define SLAVE_ADDRESS 0x04
 
 int data = 0;
+int brightness = round(255*0.6);
 
 void massDigitalWrite(int powerLevel){
-  for (int i = 0; i < powerLevel; i++){
+  for (int i = 1; i <= powerLevel; i++){
     digitalWrite(i, HIGH);
   }
   for (int j = 5; j > powerLevel; j--){
@@ -22,12 +23,18 @@ void receiveData(int byteCount){
     Serial.println(data);
     int led = data % 16;
     int pwm = (data-led)/16;
+    // Inversion
+    pwm = -(pwm - 1);
+    brightness = max(55, min(255, brightness + pwm));
+
     Serial.print("Power Level: ");
     Serial.print(led);
     Serial.print("\tPWM: ");
-    Serial.println(pwm-1);
-
-    analogWrite(9, pwm*127);
+    Serial.println(pwm);
+    Serial.print("Brightness: ");
+    Serial.println(brightness);
+    
+    analogWrite(6, brightness);
     massDigitalWrite(led);
   }
 }
@@ -44,8 +51,12 @@ void setup() {
   pinMode(3, OUTPUT);
   pinMode(4, OUTPUT);
   pinMode(5, OUTPUT);
-  // PWM LED
-  pinMode(9, OUTPUT);
+
+ // Set pin 6 to run at 62.5 kHz
+  byte mode = 0x01;
+  TCCR0B = TCCR0B & 0b11111000 | mode;
+
+  analogWrite(6, brightness);
 
   Serial.begin(9600); // start serial for output
   // initialize i2c as slave
