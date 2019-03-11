@@ -51,18 +51,16 @@ class ADC_Reader(object):
         if not self.continuous:
             sleep_time = 1/frequency
             avg_voltage = 0
-            avg_current_0 = 0
-            avg_current_1 = 0
+            avg_current = 0
             for i in range(number_of_samples):
                 avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                avg_current_1 = (avg_current_1*i + self.channels[1].voltage)/(i+1)
-                avg_current_0 = (avg_current_0*i + self.channels[0].voltage)/(i+1)
+                avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
                 time.sleep(sleep_time)
-            avg_current = (avg_current_1 - avg_current_0)/resistance
             return (avg_voltage, avg_current)
         #Continuous sampling
-        voltage = self.channels[2].voltage
-        current = self.differentials[0].voltage/resistance
+        voltage = (self.adc.read(2)/4096)*6.144
+        current = (self.adc.read(0, is_differential=True)/4096)*6.144/resistance
+        self.adc.stop_adc()
         return (voltage, current)
 
 
