@@ -45,17 +45,20 @@ class ADC_Reader(object):
     def read_raw(self, chan):
         return self.channels[chan].value
 
-    def sample(self, frequency=0, number_of_samples=0):
+    def sample(self, frequency=3300, number_of_samples=1):
         resistance = 0.01
         #Single shot sampling
         if not self.continuous:
             sleep_time = 1/frequency
             avg_voltage = 0
-            avg_current = 0
+            avg_current_0 = 0
+            avg_current_1 = 0
             for i in range(number_of_samples):
                 avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                avg_current = (avg_current*i + self.differentials[0].voltage)/(i+1)
+                avg_current_1 = (avg_current_1*i + self.channels[1].voltage)/(i+1)
+                avg_current_0 = (avg_current_0*i + self.channels[0].voltage)/(i+1)
                 time.sleep(sleep_time)
+            avg_current = (avg_current_1 - avg_current_0)/resistance
             return (avg_voltage, avg_current)
         #Continuous sampling
         voltage = self.channels[2].voltage
@@ -64,11 +67,18 @@ class ADC_Reader(object):
 
 
 if __name__ == "__main__":
-    adc = ADC_Reader()
+    _address = 0x48
+    adcs = []
+    for i in range(3):
+        try:
+            adc = ADC_Reader(address=_address+i)
+        except Exception:
+            continue
+        adcs.append(adc)
     print("\t\tVoltage\t\tRaw Value")
     while True:
-        for i in range(4):
-            print("Channel {}:\t{:.5f}\t\t{}".format(i, adc.read_voltage(i), adc.read_raw(i)))
-        print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}\t\t{0[2]:.5f}\t\t{0[3]:.5f}".format(adc.sample(3300, 100)))
+        for i in range(len(adcs)):
+            print("ADC %d" % (i))
+            print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}".format(adcs[i].sample()))
         print("")
         time.sleep(1)

@@ -1,7 +1,10 @@
-from monitor.i2c import I2C
-from monitor.mppt import MPPT
+import time
+from monitor.mppt_packages.i2c import I2C
+from monitor.mppt_packages.mppt import MPPT, Modes
+from monitor.mppt_packages.adc import ADC_Reader as ADC
 I2C = I2C()
-MPPT = MPPT()
+adc = ADC()
+MPPT = MPPT(adc, mode=Modes.DEBUG)
 switch = 0
 
 while True:
@@ -21,6 +24,14 @@ while True:
         # L for log
         elif usr_input == 'l':
             print('.. printing log..')
+        elif usr_input == 'loop':
+            count = 0
+            while(count < 100):
+                print('..measuring panel..')
+                led, pwm = MPPT.track()
+                I2C.send_data(led,pwm)
+                time.sleep(0.5)
+                count += 1
         else:
             print("Invalid input. Try again.")
         usr_input = input("Input Command:")

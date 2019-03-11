@@ -57,8 +57,10 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         # self._voltage = read
         # self._current = read
         # self._power = self._voltage * self._current
-        self._v, self._c = self._adc.sample()
-        self._p = self._v * self._c
+        self._v, self._i = self._adc.sample()
+        self._p = self._v * self._i
+        print("Voltage\tCurrent\tPower")
+        print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}".format((self._v, self._i, self._p)))
         pass
 
     def update_old_values(self):
@@ -112,8 +114,22 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             else:
                 ret = -1
         else:
+            if round(self._v, 3) == 0.0:
+                ret = 1
+            else:
+                print(self._v)
             di_dv = (self._i - self._i_old) / (self._v - self._v_old)
-            var = -self._i / self._v
+            try:
+                var = -self._i / self._v
+            except:
+                print("in the exception")
+                ret = 1
+                led = 0
+                self.update_old_values()
+                return led, ret
+            #print("i: {}\tv: {}".format(self._i, self._v))
+            #print("di_dv: {}".format(di_dv))
+            #print("-i/v: {}".format(var))
             if di_dv == var:
                 ret = 0
             elif di_dv > var:
