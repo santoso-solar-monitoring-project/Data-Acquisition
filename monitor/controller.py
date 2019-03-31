@@ -28,12 +28,13 @@ This function will be called as a Process later
 Assumes the ADC at 0x48 is connected to the MPPT panel
 '''
 def run_monitor(voltages, currents, mppt_mode, ready_flag):
-    ADC_p1 = adc.ADC_Reader(address=0x48, continuous=True)
-    ADC_p2 = adc.ADC_Reader(address=0x49, continuous=True)
-    ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=True)
+    ADC_p1 = adc.ADC_Reader(address=0x48, continuous=False)
+    ADC_p2 = adc.ADC_Reader(address=0x49, continuous=False)
+    ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=False)
     MPPT = mppt.MPPT(ADC_p1, mode=mppt_mode)
 
     for i in range(10):
+        print("Getting values...")
         values = (ADC_p1.sample(), ADC_p2.sample(), ADC_p3.sample())
         print("Voltage\t\tCurrent")
         ready_flag.value = 0
