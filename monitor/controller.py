@@ -1,4 +1,4 @@
-from mppt_packages import adc, mppt, pusher
+from mppt_packages import adc, mppt, pusher, i2c
 from multiprocessing import Process, Manager, Lock, freeze_support
 import signal, sys, time
 
@@ -32,8 +32,9 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
     ADC_p2 = adc.ADC_Reader(address=0x49, continuous=False)
     ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=False)
     MPPT = mppt.MPPT(ADC_p1, mode=mppt_mode)
+    I2C_bus = i2c.I2C()
 
-    for i in range(10):
+    for i in range(120):
         print("Getting values...")
         values = (ADC_p1.sample(), ADC_p2.sample(), ADC_p3.sample())
         print("Voltage\t\tCurrent")
@@ -43,8 +44,10 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
                 voltages[j] = values[j][0]
                 currents[j] = values[j][1]
             print("{0:.5f}\t\t{1:.5f}".format(voltages[j], currents[j]))
+        led, pwm = MPPT.track()
+        I2C_bus.send_data(led,pwm)
         ready_flag.value = 1
-        time.sleep(2)
+        time.sleep(0.5)
     pass
 
 
@@ -52,10 +55,10 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
 An object to help upload_values' Pusher bundle data
 '''
 class Data(object):
-    def __init__(self, voltage, current, power=0.0):
+    def __init__(self, voltage, current, time):
         self.voltage = voltage
         self.current = current
-        self.power = power
+        self.time = time
 
 
 '''
@@ -63,18 +66,18 @@ Uploads the data to the web server
 voltages and currents parameters need to be from the Manager class
 '''
 def upload_values(voltages, currents, ready_flag):
-    for i in range(10):
+    for i in range(120):
         while not ready_flag.value:
             print("Upload waiting...")
             time.sleep(0.1)
         with voltage_lock, current_lock:
             data = []
             for j in range(len(voltages)):
-                data.append(Data(voltages[j], currents[j]))
+                data.append(Data(voltages[j], currents[j], time.time()*1000))
         pusher.push_data(data)
         print("Uploading panel #{0}'s values: {1:.1f}, {2:.1f}".format(j+1, voltages[j], currents[j]))
         ready_flag.value = 0
-        time.sleep(1)
+        time.sleep(0.4)
 
 if __name__ == "__main__":
     if(len(sys.argv) > 1): #They set flags

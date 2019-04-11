@@ -28,7 +28,7 @@ class ADC_Reader(object):
 
     def __init__(self, address=0x48, continuous=False, rate=3300):
         self.address = address
-        self.i2c_bus = busio.I2C(SCL, SDA, frequency=400000) #Up to 3.4MHz, should probably stay <1MHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
+        self.i2c_bus = busio.I2C(SCL, SDA, frequency=400000) #Up to 400kHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
         self.continuous = continuous
         self.rate = rate
         if continuous:
@@ -39,13 +39,19 @@ class ADC_Reader(object):
                         AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
         self.differentials = [AnalogIn(self.adc, ADC.P0, ADC.P1), AnalogIn(self.adc, ADC.P2, ADC.P3)]
 
-    def read_voltage(self, chan):
+    def read_voltage(self, chan, _gain=2/3):
+        self.adc.gain = _gain
         return self.channels[chan].voltage
 
-    def read_raw(self, chan):
+    def read_raw(self, chan, _gain=2/3):
+        self.adc.gain = _gain
         return self.channels[chan].value
 
-    def sample(self, frequency=3300, number_of_samples=1):
+    def read_differential(self, pair, _gain=2/3):
+        self.adc.gain = _gain
+        return self.differentials[pair].voltage
+
+    def sample(self, frequency=3300, number_of_samples=10):
         resistance = 0.01
         #Single shot sampling
         if not self.continuous:
@@ -54,7 +60,9 @@ class ADC_Reader(object):
             avg_current = 0
             for i in range(number_of_samples):
                 avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
+                self.adc.gain = 16 #The shunt resistor probably won't go over 100mV so this works for +/- 256mV
                 avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
+                self.adc.gain = 2/3
                 time.sleep(sleep_time)
             return (avg_voltage, avg_current)
         #Continuous sampling
@@ -70,13 +78,16 @@ if __name__ == "__main__":
     for i in range(3):
         try:
             adc = ADC_Reader(address=_address+i)
+            print("Found ADC at 0x%.2X" % (_address+i))
         except Exception:
             continue
         adcs.append(adc)
-    print("\t\tVoltage\t\tRaw Value")
+    print("\t\tVoltage\t\tCurrent")
     while True:
         for i in range(len(adcs)):
             print("ADC %d" % (i))
             print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}".format(adcs[i].sample()))
+            #print("Pair 0:\t\t{0:.5f}".format(adcs[i].read_differential(0)))
+            #print("Channel 2:\t{0:.5f}".format(adcs[i].read_voltage(2)))
         print("")
         time.sleep(1)

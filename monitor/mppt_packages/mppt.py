@@ -58,6 +58,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         # self._current = read
         # self._power = self._voltage * self._current
         self._v, self._i = self._adc.sample()
+        self._v *= 10
         self._p = self._v * self._i
         print("Voltage\tCurrent\tPower")
         print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}".format((self._v, self._i, self._p)))
