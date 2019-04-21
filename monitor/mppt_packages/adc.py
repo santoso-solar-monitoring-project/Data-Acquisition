@@ -31,6 +31,10 @@ class ADC_Reader(object):
         self.i2c_bus = busio.I2C(SCL, SDA, frequency=400000) #Up to 400kHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
         self.continuous = continuous
         self.rate = rate
+        self._avg_voltage_old = 0
+        self._avg_current_old = 0
+        self._voltage_old = 0
+        self._current_old = 0
         if continuous:
             self.adc = ADC.ADS1015(i2c=self.i2c_bus, gain=2/3, address=self.address, data_rate=self.rate, mode=ADC.Mode.CONTINUOUS)
         else:
@@ -54,22 +58,32 @@ class ADC_Reader(object):
     def sample(self, frequency=3300, number_of_samples=10):
         resistance = 0.01
         #Single shot sampling
-        if not self.continuous:
-            sleep_time = 1/frequency
-            avg_voltage = 0
-            avg_current = 0
-            for i in range(number_of_samples):
-                avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                self.adc.gain = 16 #The shunt resistor probably won't go over 100mV so this works for +/- 256mV
-                avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
-                self.adc.gain = 2/3
-                time.sleep(sleep_time)
-            return (avg_voltage, avg_current)
+        try:
+            if not self.continuous:
+                sleep_time = 1/frequency
+                avg_voltage = 0
+                avg_current = 0
+                for i in range(number_of_samples):
+                    avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
+                    self.adc.gain = 8 #The shunt resistor probably won't go over 100mV so this works for +/- 512mV
+                    avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
+                    self.adc.gain = 2/3
+                    time.sleep(sleep_time)
+                self._avg_voltage_old = avg_voltage
+                self._avg_current_old = avg_current
+                return (avg_voltage, avg_current)
+        except IOError:
+            return (self._avg_voltage_old, self._avg_current_old)
         #Continuous sampling
-        voltage = (self.adc.read(2)/4096)*6.144
-        current = (self.adc.read(0, is_differential=True)/4096)*6.144/resistance
-        self.adc.stop_adc()
-        return (voltage, current)
+        try:
+            voltage = (self.adc.read(2)/4096)*6.144
+            current = (self.adc.read(0, is_differential=True)/4096)*6.144/resistance
+            self.adc.stop_adc()
+            self._voltage_old = voltage
+            self._current_old = current
+            return (voltage, current)
+        except IOError:
+            return (self._voltage_old, self._current_old)
 
 
 if __name__ == "__main__":
