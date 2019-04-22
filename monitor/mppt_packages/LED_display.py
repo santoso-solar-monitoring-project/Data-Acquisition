@@ -14,3 +14,12 @@ class LED(object):
 
     def set_duty_cycle(self, channel, _duty_cycle): #Should _duty_cycle be 0-100 or 0-65535?
         self.pwm.channels[channel].duty_cycle = _duty_cycle
+
+    def display_power(self, power):
+        max_power = 400.0
+        led_number = 0
+        while power >= 40:
+            set_duty_cycle(led_number, 100)
+            power -= 40
+            led_number += 1
+        set_duty_cycle(led_number, 100*power/40)
