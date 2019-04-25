@@ -39,19 +39,19 @@ while True:
             uno_fails = 0
             measurement_fails = 0
             while count < 100:
-                led, pwm, adc_fail, measurement_fail = MPPT.track(test=True)
+                led, pwm = MPPT.track(test=True)
                 uno_fail = I2C.send_data(led, pwm)
                 time.sleep(0.2)
 
                 count += 1
-                adc_fails += adc_fail
+                #adc_fails += adc_fail
                 uno_fails += uno_fail
-                measurement_fails += measurement_fail
+                #measurement_fails += measurement_fail
                 print("COUNT: ", count)
             print("\n---- TEST RESULTS ----")
-            print("\tADC FAILURES: ", adc_fails)
+            #print("\tADC FAILURES: ", adc_fails)
             print("\tUNO FAILURES: ", uno_fails)
-            print("\tOUT OF BOUNDS MEASUREMENTS: ", measurement_fails)
+            #print("\tOUT OF BOUNDS MEASUREMENTS: ", measurement_fails)
         elif usr_input == "set":
             pwm = int(input("Desired PWM: "))
             I2C.set_pwm(pwm)

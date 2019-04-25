@@ -35,27 +35,13 @@ class I2C:
         for error_count in range(5):
             try:
                 self._bus.write_byte(self._address, int(255))
-                self._bus.write_byte(self._address, int(pwm))
+                
             except:
                 time.sleep(0.15)
                 uno_error = 1
                 continue
             uno_error = 0
             break
-        if uno_error:
-            return "Failed to send 255 to pwm"
-        for error_count in range(5):
-            try:
-                self._bus.write_byte(self._address, int(pwm))
-            except (OSError, IOError):
-                time.sleep(0.15)
-                uno_error = 1
-                continue
-            uno_error = 0
-            break
-        if uno_error:
-            return "Failed to set pwm"
-        return None
 
     def read_data(self):
         uno_error = 0
