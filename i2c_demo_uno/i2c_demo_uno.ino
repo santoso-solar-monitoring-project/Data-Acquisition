@@ -16,32 +16,45 @@ void massDigitalWrite(int powerLevel){
 
 // callback for received data
 void receiveData(int byteCount){
-
+  // cli turns off interrupts
+  cli();
   while(Wire.available()) {
     data = Wire.read();
-    Serial.print("data received: ");
-    Serial.println(data);
-    int led = data % 16;
-    int pwm = (data-led)/16;
-    // Inversion
-    pwm = -(pwm - 1);
-    brightness = max(55, min(255, brightness + pwm));
-
-    Serial.print("Power Level: ");
-    Serial.print(led);
-    Serial.print("\tPWM: ");
-    Serial.println(pwm);
-    Serial.print("Brightness: ");
-    Serial.println(brightness);
-    
-    analogWrite(6, brightness);
-    massDigitalWrite(led);
+    if(data == 255){
+      int pwm = Wire.read();
+      brightness = max(min(pwm, 255), 55);
+      analogWrite(6, brightness);
+    } else {
+      Serial.print("data received: ");
+      Serial.println(data);
+      int led = data % 16;
+      int pwm = (data-led)/16;
+      // Inversion
+      pwm = -(pwm - 1);
+      brightness = max(min(brightness + pwm, 255), 55);
+  
+      Serial.print("Power Level: ");
+      Serial.print(led);
+      Serial.print("\tPWM: ");
+      Serial.println(pwm);
+      Serial.print("Brightness: ");
+      Serial.println(brightness);
+      
+      analogWrite(6, brightness);
+      massDigitalWrite(led); 
+    }
   }
+  // sei turns on interrupts
+  sei();
 }
 
 // callback for sending data
 void sendData(){
+  // cli turns off interrupts
+  cli();
   Wire.write(data);
+  // sei turns on interrupts
+  sei();
 }
 
 void setup() {
