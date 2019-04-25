@@ -1,4 +1,5 @@
 import time
+import csv
 from monitor.mppt_packages.i2c import I2C
 from monitor.mppt_packages.mppt import MPPT, Modes
 from monitor.mppt_packages.adc import ADC_Reader as ADC
@@ -7,14 +8,17 @@ adc = ADC(address=0x48, continuous=False)
 MPPT = MPPT(adc, mode=Modes.DEBUG)
 switch = 0
 
+CSV_FILE = open('log.csv', 'w', newline='')
+CSV_WRITER = csv.writer(CSV_FILE)
+CSV_WRITER.writerow(['Voltage', 'Current', 'PWM', 'LED'])
+
 while True:
     usr_input = input("Input Command:")
     while True:
         # S for switch
         if usr_input == 's':
             print('..switching modes..')
-            switch += 1
-            switch %= 3
+            switch = (switch+1)%3
             MPPT.switch(switch-1)
         # M for measure
         elif usr_input == 'm':
@@ -30,6 +34,8 @@ while True:
                 print('..measuring panel..')
                 led, pwm = MPPT.track()
                 I2C.send_data(led,pwm)
+                voltage, current = adc.sample()
+                CSV_WRITER.writerow([voltage, current, pwm, led])
                 time.sleep(0.5)
                 count += 1
         elif usr_input == 'test':
