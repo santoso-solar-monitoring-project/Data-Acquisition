@@ -35,7 +35,6 @@ while True:
                 led, pwm = MPPT.track()
                 I2C.send_data(led,pwm)
                 voltage, current = adc.sample()
-                voltage *= 40/6.144
                 power = current*voltage
                 CSV_WRITER.writerow([voltage, current, power])
                 time.sleep(0.5)
@@ -66,6 +65,3 @@ while True:
         else:
             print("Invalid input. Try again.")
         usr_input = input("Input Command:")
-
-
-

@@ -71,9 +71,9 @@ class ADC_Reader(object):
                     time.sleep(sleep_time)
                 self._avg_voltage_old = avg_voltage
                 self._avg_current_old = avg_current
-                return (avg_voltage, avg_current)
+                return (avg_voltage*11, avg_current)
         except IOError:
-            return (self._avg_voltage_old, self._avg_current_old)
+            return (self._avg_voltage_old*11, self._avg_current_old)
         #Continuous sampling
         try:
             voltage = (self.adc.read(2)/4096)*6.144
@@ -81,9 +81,9 @@ class ADC_Reader(object):
             self.adc.stop_adc()
             self._voltage_old = voltage
             self._current_old = current
-            return (voltage, current)
+            return (voltage*11, current)
         except IOError:
-            return (self._voltage_old, self._current_old)
+            return (self._voltage_old*11, self._current_old)
 
 
 if __name__ == "__main__":
