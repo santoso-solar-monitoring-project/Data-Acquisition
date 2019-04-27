@@ -65,9 +65,9 @@ class ADC_Reader(object):
                 avg_current = 0
                 for i in range(number_of_samples):
                     avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                    self.adc.gain = 8 #The shunt resistor probably won't go over 100mV so this works for +/- 512mV
+                    #self.adc.gain = 8 #The shunt resistor probably won't go over 100mV so this works for +/- 512mV
                     avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
-                    self.adc.gain = 2/3
+                    #self.adc.gain = 2/3
                     time.sleep(sleep_time)
                 self._avg_voltage_old = avg_voltage
                 self._avg_current_old = avg_current
@@ -99,9 +99,11 @@ if __name__ == "__main__":
     print("\t\tVoltage\t\tCurrent")
     while True:
         for i in range(len(adcs)):
-            print("ADC %d" % (i))
+            print("ADC 0x%.2X" % (adcs[i].address))
             print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}".format(adcs[i].sample()))
-            #print("Pair 0:\t\t{0:.5f}".format(adcs[i].read_differential(0)))
-            #print("Channel 2:\t{0:.5f}".format(adcs[i].read_voltage(2)))
-        print("")
+            print("Channel 0:\t{0:.5f}".format(adcs[i].channels[0].voltage))
+            print("Channel 1:\t{0:.5f}".format(adcs[i].channels[1].voltage))
+            print("Channel 2:\t{0:.5f}".format(adcs[i].channels[2].voltage))
+            print("")
+        print("\n---------------------------------------\n")
         time.sleep(1)
