@@ -10,7 +10,7 @@ switch = 0
 
 CSV_FILE = open('log.csv', 'w', newline='')
 CSV_WRITER = csv.writer(CSV_FILE)
-CSV_WRITER.writerow(['Voltage', 'Current', 'PWM', 'LED'])
+CSV_WRITER.writerow(['Voltage', 'Current', 'Power'])
 
 while True:
     usr_input = input("Input Command:")
@@ -35,7 +35,9 @@ while True:
                 led, pwm = MPPT.track()
                 I2C.send_data(led,pwm)
                 voltage, current = adc.sample()
-                CSV_WRITER.writerow([voltage, current, pwm, led])
+                voltage *= 40/6.144
+                power = current*voltage
+                CSV_WRITER.writerow([voltage, current, power])
                 time.sleep(0.5)
                 count += 1
         elif usr_input == 'test':
