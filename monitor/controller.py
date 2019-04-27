@@ -28,16 +28,16 @@ This function will be called as a Process later
 Assumes the ADC at 0x48 is connected to the MPPT panel
 '''
 def run_monitor(voltages, currents, mppt_mode, ready_flag):
-    ADC_p1 = adc.ADC_Reader(address=0x48, continuous=False)
-    ADC_p2 = adc.ADC_Reader(address=0x49, continuous=False)
-    #ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=False)
+    ADC_p1 = adc.ADC_Reader(address=0x48, continuous=False) #MPPT
+    ADC_p2 = adc.ADC_Reader(address=0x49, continuous=False) #Load only
+    ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=False) #Open circuit
     MPPT = mppt.MPPT(ADC_p1, mode=mppt_mode)
     I2C_bus = i2c.I2C()
 
     for i in range(120):
         print("Getting values...")
-        #values = (ADC_p1.sample(), ADC_p2.sample(), ADC_p3.sample())
-        values = (ADC_p1.sample(), ADC_p2.sample())
+        values = (ADC_p1.sample(), ADC_p2.sample(), ADC_p3.sample())
+        #values = (ADC_p1.sample(), ADC_p2.sample())
         print("Voltage\t\tCurrent")
         ready_flag.value = 0
         for j in range(len(values)):
@@ -45,7 +45,7 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
                 voltages[j] = values[j][0]
                 currents[j] = values[j][1]
             print("{0:.5f}\t\t{1:.5f}".format(voltages[j], currents[j]))
-        led, pwm = MPPT.track()
+        led, pwm = MPPT.track(voltage=values[0][0], current=values[0][1]) #Set up MPPT to accept this information
         I2C_bus.send_data(led,pwm)
         ready_flag.value = 1
         time.sleep(0.5)
@@ -80,6 +80,14 @@ def upload_values(voltages, currents, ready_flag):
         ready_flag.value = 0
         time.sleep(0.4)
 
+'''
+Displays the Curse client on the screen and controls the MPPT mode
+Also displays real-time voltage, current, and power
+'''
+def display_control(mode, ready_flag):
+    pass
+    #Display the Curse client here and update MPPT mode based on their input
+
 if __name__ == "__main__":
     if(len(sys.argv) > 1): #They set flags
         args = sys.argv[1:] #Ignore the filename (arg 0)
@@ -111,6 +119,7 @@ if __name__ == "__main__":
 
     panel_process = Process(target=run_monitor, args=(shared_voltages, shared_currents, mode, ready))
     web_process = Process(target=upload_values, args=(shared_voltages, shared_currents, ready))
+    control_process = Process(target=display_control, args=(mode, ready))
     panel_process.start()
     web_process.start()
 
@@ -121,7 +130,7 @@ if __name__ == "__main__":
 '''
 TODO:
 -Determine if the MPPT panel needs its own process
--Implement processes
+-Implement processes)
 -Ensure the processes are being run on different cores
 -Test the web process
 '''
