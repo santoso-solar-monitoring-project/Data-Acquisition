@@ -12,7 +12,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
 
     MAX_POWER = 400
 
-    def __init__(self, adc, mode=Modes.DEBUG):
+    def __init__(self, adc_object=None, mode=Modes.DEBUG):
         self._v = 0
         self._i = 0
         self._p = 0
@@ -25,7 +25,10 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             self._mode = mode
         self._debug = 0
         self._count = 0
-        self._adc = adc
+        if not adc_object:
+            self._adc = ADC_Reader(address=0x48)
+        else:
+            self._adc = adc_object
 
         self._test = False
         self._adc_error = 0
@@ -71,8 +74,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         # self._power = self._voltage * self._current
         try:
             self._v, self._i = self._adc.sample()
-            self._v *= 10
-
+            '''
             if self._v < 0 or self._v > 40:
                 self._measurement_error += 1
 
@@ -81,7 +83,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
 
             if self._measurement_error > 0:
                 print("...error measuring data...")
-
+            '''
             self._v = max(min(self._v, 40.), 0.)
             self._i = max(min(self._i, 10.), 0.)
         except IOError:
@@ -92,7 +94,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
 
         self._p = self._v * self._i
         print("Voltage\tCurrent\tPower")
-        print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}".format((self._v, self._i, self._p)))
+        print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}\n".format((self._v, self._i, self._p)))
 
     def update_old_values(self):
         self._v_old = self._v

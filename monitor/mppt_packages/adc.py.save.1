@@ -65,10 +65,9 @@ class ADC_Reader(object):
                 avg_current = 0
                 for i in range(number_of_samples):
                     avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                    self.adc.gain = 16 #The shunt resistor probably won't go over 100mV so this works for +/- 1024mV
-                    #avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
-                    avg_current = (avg_current*i + (self.read_raw(0)/1024.0-self.read_raw(1)/1024.0)/resistance)/(i+1)
-                    self.adc.gain = 1
+                    self.adc.gain = 4 #The shunt resistor probably won't go over 100mV so this works for +/- 512mV
+                    avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
+                    self.adc.gain = 2/3
                     time.sleep(sleep_time)
                 self._avg_voltage_old = avg_voltage
                 self._avg_current_old = avg_current

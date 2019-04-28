@@ -13,10 +13,19 @@ CSV_WRITER = csv.writer(CSV_FILE)
 CSV_WRITER.writerow(['Voltage', 'Current', 'Power'])
 
 while True:
-    usr_input = input("Input Command:")
+    usr_input = input("Input Command:").lower()
     while True:
+        #h for help
+        if 'h' in usr_input:
+            print('Available commands:')
+            print("'s': Switch mode")
+            print("'m': Measure panel")
+            print("'l': Log")
+            print("'loop': Loop tracking")
+            print("'test': Test I2C")
+            print("'set': Set PWM value")
         # S for switch
-        if usr_input == 's':
+        elif usr_input == 's':
             print('..switching modes..')
             switch = (switch+1)%3
             MPPT.switch(switch-1)
