@@ -45,21 +45,24 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         elif self._mode == Modes.CONDUCTANCE:
             print("MPPT now in Incremental Conductance Mode")
 
-    def track(self, test=False):
+    def track(self, test=False, voltage=None, current=None):
         # Initialize error tracking values
         self._test = test
         self._adc_error = 0
         self._measurement_error = 0
+
+        _voltage = voltage
+        _current = current
 
         # Debug Mode
         if self._mode == Modes.DEBUG:
             return self.mppt_debug()
         # P&O
         elif self._mode == Modes.OBSERVE:
-            return self.mppt_perturb_observe()
+            return self.mppt_perturb_observe(voltage=_voltage, current=_current)
         # Inc Cond
         elif self._mode == Modes.CONDUCTANCE:
-            return self.mppt_incremental_conductance()
+            return self.mppt_incremental_conductance(voltage=_voltage, current=_current)
 
     def read_new_values(self):
         # Zach do here the adc stuff kinda
@@ -112,8 +115,12 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         print('DEBUG_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
         return led, ret
 
-    def mppt_perturb_observe(self):
-        self.read_new_values()
+    def mppt_perturb_observe(self, voltage=None, current=None):
+        if(voltage != None and current != None):
+            self._v = voltage
+            self._i = current
+        else:
+            self.read_new_values()
 
         if self._p > self._p_old:
             if self._v > self._v_old:
@@ -134,8 +141,12 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         else:
             return led, ret
 
-    def mppt_incremental_conductance(self):
-        self.read_new_values()
+    def mppt_incremental_conductance(self, voltage=None, current=None):
+        if(voltage != None and current != None):
+            self._v = voltage
+            self._i = current
+        else:
+            self.read_new_values()
 
         if self._v == self._v_old:
             if self._i == self._i_old:
