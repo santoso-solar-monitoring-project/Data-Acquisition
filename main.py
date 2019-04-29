@@ -8,7 +8,9 @@ adc = ADC(address=0x48, continuous=False)
 MPPT = MPPT(adc, mode=Modes.DEBUG)
 switch = 0
 
-CSV_FILE = open('log.csv', 'w', newline='')
+filename = input("What would you like to name the new file?\n").split(".")[0]
+
+CSV_FILE = open(filename + '.csv', 'w', newline='')
 CSV_WRITER = csv.writer(CSV_FILE)
 CSV_WRITER.writerow(['Voltage', 'Current', 'Power'])
 
