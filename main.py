@@ -10,7 +10,7 @@ switch = 0
 
 filename = input("What would you like to name the new file?\n").split(".")[0]
 
-CSV_FILE = open(filename + '.csv', 'w', newline='')
+CSV_FILE = open('./csv_data/' + filename + '.csv', 'w', newline='')
 CSV_WRITER = csv.writer(CSV_FILE)
 CSV_WRITER.writerow(['Voltage', 'Current', 'Power'])
 
