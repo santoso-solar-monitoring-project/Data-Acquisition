@@ -55,7 +55,7 @@ class ADC_Reader(object):
         self.adc.gain = _gain
         return self.differentials[pair].voltage
 
-    def sample(self, frequency=3300, number_of_samples=30):
+    def sample(self, frequency=3300, number_of_samples=10):
         resistance = 0.01
         #Single shot sampling
         if not self.continuous:
