@@ -2,8 +2,8 @@
 
 #define SLAVE_ADDRESS 0x04
 
-int data = 0;
-int brightness = round(255*0.6);
+volatile int data = 0;
+volatile int brightness = 55; //Initial PWM set to ~22%
 
 void massDigitalWrite(int powerLevel){
   for (int i = 1; i <= powerLevel; i++){
