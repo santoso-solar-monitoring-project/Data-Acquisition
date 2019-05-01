@@ -73,8 +73,9 @@ def upload_values(voltages, currents, ready_flag):
             time.sleep(0.1)
         with voltage_lock, current_lock:
             data = []
+            data_time = time.time()*1000
             for j in range(len(voltages)):
-                data.append(Data(voltages[j], currents[j], time.time()*1000))
+                data.append(Data(voltages[j], currents[j], data_time))
         pusher.push_data(data)
         print("Uploading panel #{0}'s values: {1:.1f}, {2:.1f}".format(j+1, voltages[j], currents[j]))
         ready_flag.value = 0

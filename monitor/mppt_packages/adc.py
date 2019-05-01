@@ -2,6 +2,7 @@ import time
 from board import SCL, SDA
 import busio
 import adafruit_ads1x15.ads1015 as ADC
+import adafruit_ads1x15.ads1115 as ADC_1115
 from adafruit_ads1x15.analog_in import AnalogIn
 
 class ADC_Reader(object):
@@ -26,7 +27,7 @@ class ADC_Reader(object):
     from the number of samples
     """
 
-    def __init__(self, address=0x48, continuous=False, rate=3300):
+    def __init__(self, address=0x48, continuous=False, rate=3300, ads1115=False):
         self.address = address
         self.i2c_bus = busio.I2C(SCL, SDA, frequency=400000) #Up to 400kHz, look at https://www.raspberrypi-spy.co.uk/2018/02/change-raspberry-pi-i2c-bus-speed/
         self.continuous = continuous
@@ -36,9 +37,15 @@ class ADC_Reader(object):
         self._voltage_old = 0
         self._current_old = 0
         if continuous:
-            self.adc = ADC.ADS1015(i2c=self.i2c_bus, gain=2/3, address=self.address, data_rate=self.rate, mode=ADC.Mode.CONTINUOUS)
+            if ads1115:
+                self.adc = ADC_1115.ADS1115(i2c=self.i2c_bus, gain=2/3, address=self.address, data_rate=min(self.rate, 860), mode=ADC_1115.Mode.CONTINUOUS)
+            else:
+                self.adc = ADC.ADS1015(i2c=self.i2c_bus, gain=2/3, address=self.address, data_rate=self.rate, mode=ADC.Mode.CONTINUOUS)
         else:
-            self.adc = ADC.ADS1015(i2c=self.i2c_bus, gain=2/3, address=self.address, mode=ADC.Mode.SINGLE)
+            if ads1115:
+                self.adc = ADC_1115.ADS1115(i2c=self.i2c_bus, gain=2/3, address=self.address, data_rate=min(self.rate, 860), mode=ADC_1115.Mode.SINGLE)
+            else:
+                self.adc = ADC.ADS1015(i2c=self.i2c_bus, gain=2/3, address=self.address, mode=ADC.Mode.SINGLE)
         self.channels = [AnalogIn(self.adc, ADC.P0), AnalogIn(self.adc, ADC.P1),
                         AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
         self.differentials = [AnalogIn(self.adc, ADC.P0, ADC.P1), AnalogIn(self.adc, ADC.P2, ADC.P3)]
@@ -92,12 +99,15 @@ class ADC_Reader(object):
 if __name__ == "__main__":
     _address = 0x48
     adcs = []
-    for i in range(1):
+    for i in range(3):
         try:
             adc = ADC_Reader(address=_address+i)
             print("Found ADC at 0x%.2X" % (_address+i))
         except Exception:
-            continue
+            try:
+                adc = ADC_Reader(address=_address+i, ads1115=True)
+            except Exception:
+                continue
         adcs.append(adc)
     print("\t\tVoltage\t\tCurrent")
     while True:
