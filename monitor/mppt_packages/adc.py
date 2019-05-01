@@ -58,23 +58,25 @@ class ADC_Reader(object):
     def sample(self, frequency=3300, number_of_samples=10):
         resistance = 0.01
         #Single shot sampling
-        try:
-            if not self.continuous:
-                sleep_time = 1/frequency
-                avg_voltage = 0
-                avg_current = 0
-                for i in range(number_of_samples):
+        if not self.continuous:
+            sleep_time = 1.0/frequency
+            avg_voltage = 0
+            avg_current = 0
+            for i in range(number_of_samples):
+                try:
                     avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
                     self.adc.gain = 16 #The shunt resistor probably won't go over 100mV so this works for +/- 1024mV
                     #avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
                     avg_current = (avg_current*i + (self.read_raw(0)/1024.0-self.read_raw(1)/1024.0)/resistance)/(i+1)
                     self.adc.gain = 1
+                    #time.sleep(sleep_time/10)
+                except IOError:
+                    print("Error sampling from the ADC 0x%.2X" % (self.address))
                     time.sleep(sleep_time)
-                self._avg_voltage_old = avg_voltage
-                self._avg_current_old = avg_current
-                return (avg_voltage*11, avg_current)
-        except IOError:
-            return (self._avg_voltage_old*11, self._avg_current_old)
+                    self.adc.gain = 1
+            self._avg_voltage_old = avg_voltage
+            self._avg_current_old = avg_current
+            return (avg_voltage*11, avg_current)
         #Continuous sampling
         try:
             voltage = (self.adc.read(2)/4096)*6.144
