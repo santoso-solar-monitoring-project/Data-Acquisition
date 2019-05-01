@@ -162,8 +162,6 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         else:
             if round(self._v, 3) == 0.0:
                 ret = 1
-            else:
-                print(self._v)
             di_dv = (self._i - self._i_old) / (self._v - self._v_old)
             try:
                 var = -self._i / self._v

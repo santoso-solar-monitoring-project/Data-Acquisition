@@ -1,7 +1,7 @@
 from mppt_packages import adc, mppt, pusher, i2c
 from multiprocessing import Process, Manager, Lock, freeze_support
 import signal, sys, time, os
-from pynput.keyboard import Key, Controller
+from pynput.keyboard import Key, Listener
 
 '''
 A signal handler for when you press Ctrl+class
@@ -11,6 +11,7 @@ def signal_handler(signum, frame):
     print("\nShutting down processes...")
     panel_process.terminate()
     web_process.terminate()
+    control_process.terminate()
     raise KeyboardInterrupt("Killed processes, exiting...")
     sys.exit(0)
 
@@ -49,7 +50,7 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
         led, pwm = MPPT.track(voltage=values[0][0], current=values[0][1]) #Set up MPPT to accept this information
         I2C_bus.send_data(led,pwm)
         ready_flag.value = 1
-        print("\033[4;0HMPPT Voltage\tMPPT Current\tMPPT Power\n{0:0.3f}\t{1:0.3f}\t{2:0.3f}".format(voltages[0], currents[0], voltages[0]*currents[0]))
+        print("\033[4;0HMPPT Voltage\tMPPT Current\tMPPT Power\n{0:0.3f}\t\t{1:0.3f}\t\t{2:0.3f}".format(voltages[0], currents[0], voltages[0]*currents[0]))
         sys.stdout.flush()
         time.sleep(0.5)
     pass
@@ -79,7 +80,7 @@ def upload_values(voltages, currents, ready_flag):
             data_time = time.time()*1000
             for j in range(len(voltages)):
                 data.append(Data(voltages[j], currents[j], data_time))
-        pusher.push_data(data)
+        #pusher.push_data(data)
         #print("Uploading panel #{0}'s values: {1:.1f}, {2:.1f}".format(j+1, voltages[j], currents[j]))
         ready_flag.value = 0
         time.sleep(0.4)
@@ -89,7 +90,7 @@ Displays the Curse client on the screen and controls the MPPT mode
 Also displays real-time voltage, current, and power
 '''
 def display_control(mode, keyboard_ready):
-    with Listener(on_release=keyboard_listener) as listener:
+    with Listener(on_press=keyboard_listener) as listener:
         listener.join()
         print("Keyboard listener closed")
 
@@ -116,10 +117,10 @@ def keyboard_listener(key):
         except IndexError:
             pass
     elif key == Key.esc:
-        os.kill(os.getpid(), signal.SIGINT)
+        sys.exit(0)
     else:
         keyboard_input.append(key)
-        print(key, end='')
+        print('\033[1;{0}H{1}'.format(55+len(keyboard_input),key), end='')
 
 def refresh_screen():
     if 'win' in sys.platform:
@@ -153,7 +154,9 @@ if __name__ == "__main__":
 
     if 'win' in sys.platform:
         freeze_support() #ONLY FOR WINDOWS SYSTEMS
-
+        os.system('cls')
+    else:
+        os.system('clear')
     value_manager = Manager()
     shared_voltages = value_manager.list([0.0, 0.0, 0.0])
     shared_currents = value_manager.list([0.0, 0.0, 0.0])
@@ -162,6 +165,8 @@ if __name__ == "__main__":
     panel_process = Process(target=run_monitor, args=(shared_voltages, shared_currents, mode, ready))
     web_process = Process(target=upload_values, args=(shared_voltages, shared_currents, ready))
     control_process = Process(target=display_control, args=(mode, ready))
+    refresh_screen()
+    control_process.start()
     panel_process.start()
     web_process.start()
 
@@ -169,6 +174,7 @@ if __name__ == "__main__":
 
     panel_process.join()
     web_process.join()
+    control_process.join()
 
 '''
 TODO:

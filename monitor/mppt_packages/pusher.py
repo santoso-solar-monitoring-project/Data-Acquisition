@@ -1,6 +1,6 @@
 import pusher
 
-pusher_client = pusher.Pusher(app_id=u'651114', key=u'9dfb7224d7fd60cc9c5f', secret=u'958b9a4ad341c43ade27', cluster=u'us2')
+pusher_client = pusher.Pusher(app_id=u'773740', key=u'2f5b9c6ca3ae47929ed1', secret=u'10d53ef80206b52ca5b8', cluster=u'us2')
 
 def push_data(data):
     #for datum in data:

@@ -1,7 +1,6 @@
 from mppt_packages import adc, mppt, pusher, i2c
 from multiprocessing import Process, Manager, Lock, freeze_support
 import signal, sys, time, os
-from curses_package.cursesClient import CursesClient
 
 '''
 A signal handler for when you press Ctrl+class
@@ -30,7 +29,7 @@ curses_lock = Lock()
 This function will be called as a Process later
 Assumes the ADC at 0x48 is connected to the MPPT panel
 '''
-def run_monitor(voltages, currents, mppt_mode, ready_flag, command_string):
+def run_monitor(voltages, currents, mppt_mode, ready_flag):
     ADC_p1 = adc.ADC_Reader(address=0x48, continuous=False, ads1115=False) #MPPT
     ADC_p2 = adc.ADC_Reader(address=0x49, continuous=False, ads1115=True) #Load only
     ADC_p3 = adc.ADC_Reader(address=0x4A, continuous=False, ads1115=False) #Open circuit
@@ -38,16 +37,7 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag, command_string):
     I2C_bus = i2c.I2C()
 
     while True:
-        new_mppt_mode = "".join(command_string)
-        if new_mppt_mode == "observe":
-            mppt_mode.value = mppt.Modes.OBSERVE
-        elif new_mppt_mode == "conductance":
-            mppt_mode.value = mppt.Modes.CONDUCTANCE
-        elif new_mppt_mode == "debug":
-            mppt_mode.value = mppt.Modes.DEBUG
-        while len(command_string) > 0:
-            del command_string[0]
-        MPPT.switch(mode=mppt_mode.value)
+        MPPT.switch(mode=mppt_mode)
         #print("Getting values...")
         values = (ADC_p1.sample(), ADC_p2.sample(), ADC_p3.sample())
         #print("Voltage\t\tCurrent")
@@ -78,8 +68,8 @@ class Data(object):
 Uploads the data to the web server
 voltages and currents parameters need to be from the Manager class
 '''
-def upload_values(voltages, currents, ready_flag, mppt_mode, data_strings):
-    while True:
+def upload_values(voltages, currents, ready_flag):
+    for i in range(120):
         while not ready_flag.value:
             #print("Upload waiting...")
             time.sleep(0.1)
@@ -90,14 +80,6 @@ def upload_values(voltages, currents, ready_flag, mppt_mode, data_strings):
                 data.append(Data(voltages[j], currents[j], data_time))
         pusher.push_data(data)
         #print("Uploading panel #{0}'s values: {1:.1f}, {2:.1f}".format(j+1, voltages[j], currents[j]))
-        with curses_lock:
-            while len(data_strings) > 0:
-                del data_strings[0]
-            data_strings.append("----------------MPPT Mode--------------")
-            data_strings.append(str(mppt_mode.value))
-            data_strings.append("---------------MPPT Values-------------")
-            data_strings.append("Voltage\t\tCurrent\t\tPower")
-            data_strings.append(str(round(data[0].voltage, 3)) + "\t\t" + str(round(data[0].current,3)) + "\t\t" + str(round(data[0].voltage*data[0].current,3)))
         ready_flag.value = 0
         time.sleep(0.4)
 
@@ -105,9 +87,8 @@ def upload_values(voltages, currents, ready_flag, mppt_mode, data_strings):
 Displays the Curse client on the screen and controls the MPPT mode
 Also displays real-time voltage, current, and power
 '''
-def display_control(mode, ready_flag, command_string, data_strings, _curses_lock):
-    client = CursesClient()
-    client.run(command_string, data_strings, _curses_lock)
+def display_control(mode, data_strings):
+    pass
 
 if __name__ == "__main__":
     if(len(sys.argv) > 1): #They set flags
@@ -128,23 +109,20 @@ if __name__ == "__main__":
                 sys.exit(0)
     else:
         #print("Using DEBUG mode...")
-        pass
+        mode = mppt.Modes.CONDUCTANCE
 
     if 'win' in sys.platform:
         freeze_support() #ONLY FOR WINDOWS SYSTEMS
 
     value_manager = Manager()
-    mode = value_manager.Value('i', 0)
     shared_voltages = value_manager.list([0.0, 0.0, 0.0])
     shared_currents = value_manager.list([0.0, 0.0, 0.0])
     ready = value_manager.Value('i', 0) #A ready flag that tells the upload process to wait until new values are ready
+    data_strings = value_manager.list([])
 
-    command_string = value_manager.list(list("conductance"))
-    data_strings = value_manager.list() #A list of strings to output
-
-    panel_process = Process(target=run_monitor, args=(shared_voltages, shared_currents, mode, ready, command_string))
-    web_process = Process(target=upload_values, args=(shared_voltages, shared_currents, ready, mode, data_strings))
-    control_process = Process(target=display_control, args=(mode, ready, command_string, data_strings, curses_lock))
+    panel_process = Process(target=run_monitor, args=(shared_voltages, shared_currents, mode, ready))
+    web_process = Process(target=upload_values, args=(shared_voltages, shared_currents, ready))
+    control_process = Process(target=display_control, args=(mode, data_strings))
     panel_process.start()
     web_process.start()
     control_process.start()
