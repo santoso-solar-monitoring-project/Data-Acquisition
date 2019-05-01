@@ -62,7 +62,7 @@ class ADC_Reader(object):
         self.adc.gain = _gain
         return self.differentials[pair].voltage
 
-    def sample(self, frequency=3300, number_of_samples=10):
+    def sample(self, frequency=3300, number_of_samples=20):
         resistance = 0.01
         #Single shot sampling
         if not self.continuous:
@@ -72,11 +72,10 @@ class ADC_Reader(object):
             for i in range(number_of_samples):
                 try:
                     avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
-                    self.adc.gain = 16 #The shunt resistor probably won't go over 100mV so this works for +/- 1024mV
+                    self.adc.gain = 8 #The shunt resistor probably won't go over 100mV so this works for +/- 1024mV
                     #avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
                     avg_current = (avg_current*i + (self.read_raw(0)/1024.0-self.read_raw(1)/1024.0)/resistance)/(i+1)
-                    self.adc.gain = 1
-                    #time.sleep(sleep_time/10)
+                    self.adc.gain = 2/3
                 except IOError:
                     print("Error sampling from the ADC 0x%.2X" % (self.address))
                     time.sleep(sleep_time)
@@ -115,18 +114,18 @@ if __name__ == "__main__":
             try:
                 print("ADC 0x%.2X" % (adcs[i].address))
                 print("Sample:\t\t{0[0]:.5f}\t\t{0[1]:.5f}".format(adcs[i].sample()))
-                time.sleep(0.15)
+                #time.sleep(0.15)
                 print("Channel 0:\t{0:.5f}".format(adcs[i].channels[0].voltage))
-                time.sleep(0.15)
+                #time.sleep(0.15)
                 print("Channel 1:\t{0:.5f}".format(adcs[i].channels[1].voltage))
-                time.sleep(0.15)
+                #time.sleep(0.15)
                 print("Channel 2:\t{0:.5f}".format(adcs[i].channels[2].voltage))
-                time.sleep(0.15)
-                adcs[i].adc.gain = 8
-                time.sleep(0.15)
+                #time.sleep(0.15)
+                #adcs[i].adc.gain = 8
+                #time.sleep(0.15)
                 print("Differential 0:\t{0:.5f}".format(adcs[i].differentials[0].voltage))
-                time.sleep(0.15)
-                adcs[i].adc.gain = 2/3
+                #time.sleep(0.15)
+                #adcs[i].adc.gain = 2/3
             except IOError:
                 print("0x%.2X crapped out" % (adcs[i].address))
             print("")
