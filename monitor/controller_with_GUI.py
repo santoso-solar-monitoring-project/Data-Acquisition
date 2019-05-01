@@ -49,6 +49,8 @@ def run_monitor(voltages, currents, mppt_mode, ready_flag):
         led, pwm = MPPT.track(voltage=values[0][0], current=values[0][1]) #Set up MPPT to accept this information
         I2C_bus.send_data(led,pwm)
         ready_flag.value = 1
+        print("\033[4;0HMPPT Voltage\tMPPT Current\tMPPT Power\n{0:0.3f}\t{1:0.3f}\t{2:0.3f}".format(voltages[0], currents[0], voltages[0]*currents[0]))
+        sys.stdout.flush()
         time.sleep(0.5)
     pass
 
@@ -91,8 +93,42 @@ def display_control(mode, keyboard_ready):
         listener.join()
         print("Keyboard listener closed")
 
+keyboard_input = []
+
 def keyboard_listener(key):
-    print('{0} pressed'.format(key))
+    if key == Key.enter:
+        input_string = "".join(keyboard_input).lower()
+        if "perturb" in input_string:
+            mppt_mode = mppt.Modes.OBSERVE
+        elif "increment" in input_string:
+            mppt_mode = mppt.Modes.CONDUCTANCE
+        elif "debug" in input_string:
+            mppt_mode = mppt.Modes.DEBUG
+        else:
+            print("\n'%s' is not a valid mode, please enter a valid mode...")
+            time.sleep(1)
+            refresh_screen()
+    elif key == Key.backspace:
+        try:
+            del keyboard_input[-1]
+            sys.stdout.write('\b')
+            sys.stdout.flush()
+        except IndexError:
+            pass
+    elif key == Key.esc:
+        os.kill(os.getpid(), signal.SIGINT)
+    else:
+        keyboard_input.append(key)
+        print(key, end='')
+
+def refresh_screen():
+    if 'win' in sys.platform:
+        os.system('cls')
+    else:
+        os.system('clear')
+    print('\033[0;0HCurrent mode: {0}\n'.format(["Perturb and Observe", "Incremental Conductance", "Debug"][mppt_mode]))
+    print("\033[1;0HPlease enter the MPPT mode you would like to switch to: ", end='')
+    sys.stdout.flush()
 
 if __name__ == "__main__":
     if(len(sys.argv) > 1): #They set flags
@@ -113,7 +149,7 @@ if __name__ == "__main__":
                 sys.exit(0)
     else:
         #print("Using DEBUG mode...")
-        #mode = mppt.Modes.DEBUG
+        mode = mppt.Modes.CONDUCTANCE
 
     if 'win' in sys.platform:
         freeze_support() #ONLY FOR WINDOWS SYSTEMS
@@ -122,7 +158,6 @@ if __name__ == "__main__":
     shared_voltages = value_manager.list([0.0, 0.0, 0.0])
     shared_currents = value_manager.list([0.0, 0.0, 0.0])
     ready = value_manager.Value('i', 0) #A ready flag that tells the upload process to wait until new values are ready
-    keyboard_input = value_manager.list([])
 
     panel_process = Process(target=run_monitor, args=(shared_voltages, shared_currents, mode, ready))
     web_process = Process(target=upload_values, args=(shared_voltages, shared_currents, ready))

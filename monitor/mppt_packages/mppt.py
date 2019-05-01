@@ -39,6 +39,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             self._mode = Modes(mode)
         else:
             self._mode = mode
+        '''
         if self._mode == Modes.DEBUG:
             print("MPPT now in Debug Mode")
         # P&O
@@ -47,6 +48,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         # Inc Cond
         elif self._mode == Modes.CONDUCTANCE:
             print("MPPT now in Incremental Conductance Mode")
+        '''
 
     def track(self, test=False, voltage=None, current=None):
         # Initialize error tracking values
@@ -87,14 +89,14 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             self._v = max(min(self._v, 40.), 0.)
             self._i = max(min(self._i, 10.), 0.)
         except IOError:
-            print("...Using old values...")
+            #print("...Using old values...")
             self._v = self._v_old
             self._i = self._i_old
             self._adc_error = 1
 
         self._p = self._v * self._i
-        print("Voltage\tCurrent\tPower")
-        print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}\n".format((self._v, self._i, self._p)))
+        #print("Voltage\tCurrent\tPower")
+        #print("{0[0]:.3f}\t{0[1]:.3f}\t{0[2]:.3f}\n".format((self._v, self._i, self._p)))
 
     def update_old_values(self):
         self._v_old = self._v
@@ -114,7 +116,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
         ret = self._debug - 1
         led = self._count % 6
         self._count += 1
-        print('DEBUG_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
+        #print('DEBUG_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
         return led, ret
 
     def mppt_perturb_observe(self, voltage=None, current=None):
@@ -136,7 +138,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
                 ret = 1
 
         led = self.led_gauge_level()
-        print('PO_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
+        #print('PO_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
         self.update_old_values()
         if self._test:
             return led, ret, self._adc_error, self._measurement_error
@@ -166,7 +168,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             try:
                 var = -self._i / self._v
             except:
-                print("in the exception")
+                #print("in the exception")
                 ret = 1
                 led = 0
                 self.update_old_values()
@@ -181,7 +183,7 @@ class MPPT(object): #Classes without a defined (base_class) are abstract
             else:
                 ret = -1
         led = self.led_gauge_level()
-        print('IC_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
+        #print('IC_MODE:\nLED LEVEL - {}\nPWM COMMAND - {}'.format(led, ret))
         self.update_old_values()
         if self._test:
             return led, ret, self._adc_error, self._measurement_error

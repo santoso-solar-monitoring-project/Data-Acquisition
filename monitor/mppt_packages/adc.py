@@ -50,16 +50,13 @@ class ADC_Reader(object):
                         AnalogIn(self.adc, ADC.P2), AnalogIn(self.adc, ADC.P3)]
         self.differentials = [AnalogIn(self.adc, ADC.P0, ADC.P1), AnalogIn(self.adc, ADC.P2, ADC.P3)]
 
-    def read_voltage(self, chan, _gain=2/3):
-        self.adc.gain = _gain
+    def read_voltage(self, chan):
         return self.channels[chan].voltage
 
-    def read_raw(self, chan, _gain=2/3):
-        self.adc.gain = _gain
+    def read_raw(self, chan):
         return self.channels[chan].value
 
-    def read_differential(self, pair, _gain=2/3):
-        self.adc.gain = _gain
+    def read_differential(self, pair):
         return self.differentials[pair].voltage
 
     def sample(self, frequency=3300, number_of_samples=20):
@@ -71,15 +68,13 @@ class ADC_Reader(object):
             avg_current = 0
             for i in range(number_of_samples):
                 try:
+                    self.adc.gain = 2/3
                     avg_voltage = (avg_voltage*i + self.channels[2].voltage)/(i+1)
                     self.adc.gain = 8 #The shunt resistor probably won't go over 100mV so this works for +/- 1024mV
                     #avg_current = (avg_current*i + self.differentials[0].voltage/resistance)/(i+1)
                     avg_current = (avg_current*i + (self.read_raw(0)/1024.0-self.read_raw(1)/1024.0)/resistance)/(i+1)
-                    self.adc.gain = 2/3
                 except IOError:
-                    print("Error sampling from the ADC 0x%.2X" % (self.address))
                     time.sleep(sleep_time)
-                    self.adc.gain = 1
             self._avg_voltage_old = avg_voltage
             self._avg_current_old = avg_current
             return (avg_voltage*11, avg_current)
@@ -87,7 +82,6 @@ class ADC_Reader(object):
         try:
             voltage = (self.adc.read(2)/4096)*6.144
             current = (self.adc.read(0, is_differential=True)/4096)*6.144/resistance
-            self.adc.stop_adc()
             self._voltage_old = voltage
             self._current_old = current
             return (voltage*11, current)
